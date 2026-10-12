@@ -7,7 +7,7 @@ const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DTALES Tech — SEO · AEO · GEO intelligence",
+  title: "DTALES Tech",
   description: "Compare your brand with real competitors across search engines, answer engines and generative AI.",
 };
 
