@@ -16,9 +16,12 @@ function walk(dir: string, keep: (path: string) => boolean): string[] {
   });
 }
 
-/** Application code that can end up in the browser or server bundle (tests excluded). */
+/** Next's own config, loaded only by `next dev` / `next build` and never bundled. */
+const NEXT_CONFIG = ["next.config.ts", "lib/config/next-config.ts"];
+
+/** Application code that can end up in the browser or server bundle (tests and Next's config excluded). */
 const sources = ["app", "components", "lib"]
-  .flatMap((d) => walk(join(ROOT, d), (p) => /\.(ts|tsx|js|jsx|mjs)$/.test(p) && !/\.test\.ts$/.test(p)))
+  .flatMap((d) => walk(join(ROOT, d), (p) => /\.(ts|tsx|js|jsx|mjs)$/.test(p) && !/\.test\.ts$/.test(p) && !NEXT_CONFIG.includes(relative(ROOT, p))))
   .map((path) => ({ file: relative(ROOT, path), text: readFileSync(path, "utf8") }))
   // Code only: block comments and whole-line // comments removed, so prose like "never fetch()" doesn't count.
   .map((s) => ({ ...s, code: s.text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "") }));
@@ -37,7 +40,7 @@ describe("frontend API boundaries", () => {
   it("has no hardcoded backend, tunnel or obsolete hosting URLs in active code", () => {
     // lib/config/api.ts holds the one local default (http://localhost:4000) and the loopback list.
     expect(offending(/localhost:\d+|127\.0\.0\.1|onrender\.com|\.render\.com|trycloudflare\.com|ngrok|loca\.lt|vercel\.app/i, ["lib/config/api.ts"])).toEqual([]);
-    expect(readFileSync(join(ROOT, "next.config.ts"), "utf8")).not.toMatch(/https?:\/\//);
+    for (const f of NEXT_CONFIG) expect(readFileSync(join(ROOT, f), "utf8"), f).not.toMatch(/https?:\/\//);
   });
 
   it("never talks to Supabase or a research provider directly", () => {
@@ -57,7 +60,7 @@ describe("frontend API boundaries", () => {
   });
 
   it("declares no secret-looking NEXT_PUBLIC_ variables anywhere in config or examples", () => {
-    const files = ["next.config.ts", ".env.example", "README.md"].map((f) => join(ROOT, f)).filter(existsSync);
+    const files = [...NEXT_CONFIG, ".env.example", "README.md"].map((f) => join(ROOT, f)).filter(existsSync);
     const names = [...sources.map((s) => s.text), ...files.map((f) => readFileSync(f, "utf8"))].flatMap((t) => [...t.matchAll(/NEXT_PUBLIC_[A-Z0-9_]+/g)].map((m) => m[0]));
     expect([...new Set(names)].filter((n) => !BROWSER_ENV.includes(n))).toEqual([]);
   });

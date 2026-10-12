@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD, PHASE_PRODUCTION_SERVER } from "next/constants";
 import { ApiConfigError, LOCAL_BACKEND_URL, apiRewrites, resolveApiConfig } from "./api";
-import nextConfig from "../../next.config";
+import { nextConfig } from "./next-config";
 
 const local = (env: Record<string, string | undefined> = {}) => resolveApiConfig(env, { production: false });
 const prod = (env: Record<string, string | undefined> = {}) => resolveApiConfig(env, { production: true });
@@ -74,7 +74,7 @@ describe("missing or invalid API configuration", () => {
   });
 });
 
-describe("proxy destination (next.config.ts)", () => {
+describe("proxy destination (next-config.ts)", () => {
   afterEach(() => vi.unstubAllEnvs());
 
   const rewritesFor = async (phase: string) => (await nextConfig(phase).rewrites?.()) ?? [];
