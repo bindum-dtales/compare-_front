@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LinkEye — frontend
 
-## Getting Started
-
-First, run the development server:
+SEO · AEO · GEO competitive intelligence dashboard. Next.js app that reads research from the
+Express backend in `../back`.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000 (binds 0.0.0.0); proxies /api/* to http://localhost:4000
+npm run tunnel     # in a second terminal: public *.trycloudflare.com URL
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Start the backend too (`cd ../back && npm run dev`). Named Cloudflare tunnel on your own hostname?
+Allow it for the dev server: `DEV_ORIGINS=compare.yourdomain.com npm run dev` (`*.dtales.tech` is
+already allowed).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The browser only ever calls same-origin `/api/*`; Next forwards it to `BACKEND_URL` (see
+`lib/config/api.ts` and `.env.example`). The backend origin never appears in browser code, and the
+backend needs no CORS entry for this frontend.
 
-## Learn More
+`BACKEND_URL` is **baked in at build time** (Next writes the rewrite into
+`.next/routes-manifest.json`), so a production build needs it and fails without it:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+BACKEND_URL=https://api.example.com npm run build
+npm start          # next start: a Node.js server is required for the /api proxy
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Static hosting (no Node server) can't run the proxy. That would be a different hosting model
+(`output: "export"`, not configured today) with `NEXT_PUBLIC_API_BASE_URL` set to the backend origin
+instead of `BACKEND_URL`, plus the frontend origin in the backend's `FRONTEND_URL`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Data
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All UI data comes from `lib/services/research.ts`, which reads the backend through the typed calls
+in `lib/api/`. `NEXT_PUBLIC_DEMO_DATA=1` serves the bundled sample companies (`lib/mock-data/`)
+instead. The types in `lib/types.ts` are the contract the components rely on.
