@@ -27,6 +27,11 @@ BACKEND_URL=https://api.example.com npm run build
 npm start          # next start: a Node.js server is required for the /api proxy
 ```
 
+`npm run build` uses webpack (`next build --webpack`); `npm run dev` keeps Turbopack. Turbopack runs
+PostCSS (Tailwind) in a child process started as `node` from `PATH`, not the Node binary running the
+build, so it fails ("node process exited before we could connect to it") on hosts such as Hostinger
+where `PATH` has no working `node`. Webpack runs PostCSS in-process.
+
 Static hosting (no Node server) can't run the proxy. That would be a different hosting model
 (`output: "export"`, not configured today) with `NEXT_PUBLIC_API_BASE_URL` set to the backend origin
 instead of `BACKEND_URL`, plus the frontend origin in the backend's `FRONTEND_URL`.
